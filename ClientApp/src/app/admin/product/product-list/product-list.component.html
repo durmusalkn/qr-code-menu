@@ -1,0 +1,35 @@
+<div class="table-responsive">
+  <table class="table table-hover align-middle" style="border-collapse: separate; border-spacing: 0 10px;">
+    <thead class="table-primary text-uppercase fw-bold text-center">
+      <tr style="border-bottom: 2px solid #ccc;">
+        <th scope="col" class="rounded-start">Name</th>
+        <th scope="col">Category</th>
+        <th scope="col">Price</th>
+        <th scope="col" class="rounded-end" style="width: 10%;">Actions</th>
+      </tr>
+    </thead>
+    <tbody class="text-center">
+      <ng-container *ngFor="let category of this.products">
+        <tr *ngFor="let item of category" style="background: #f9f9f9; box-shadow: 0px 2px 5px rgba(0,0,0,0.1);">
+          <td class="rounded-start"> {{ item.Name }}</td>
+          <td>{{ item.Category }}</td>
+          <td>{{ item.Price }}</td>
+          <td class="rounded-end">
+            <div class="d-flex justify-content-center gap-2">
+              <button class="btn btn-sm btn-warning" title="Edit">
+                <i class="bi bi-pencil-fill"></i>
+              </button>
+              <button class="btn btn-sm btn-danger" title="Delete">
+                <i class="bi bi-trash-fill"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </ng-container>
+
+    </tbody>
+  </table>
+</div>
+
+
+
