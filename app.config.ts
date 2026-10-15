@@ -19,7 +19,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   // Bump this whenever native config changes (new plugin, permission, native
   // dependency). It drives `runtimeVersion`, so OTA updates never reach a build
   // whose native code does not match.
-  version: '0.1.0',
+  version: '0.2.0',
   runtimeVersion: { policy: 'appVersion' },
   orientation: 'portrait',
   icon: './assets/icon.png',
@@ -47,7 +47,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'android.permission.READ_MEDIA_VISUAL_USER_SELECTED',
     ],
   },
-  plugins: ['expo-router'],
+  plugins: ['expo-router', 'expo-sqlite'],
   experiments: {
     typedRoutes: true,
   },
