@@ -22,6 +22,7 @@ export const SETTING_DEFINITIONS = {
   promptWindowEndHour: { default: 22, validate: isIntegerBetween(1, 24) },
   promptsPerDay: { default: 3, validate: isIntegerBetween(0, 10) },
   recallReminderEnabled: { default: true, validate: isBoolean },
+  onboardingCompleted: { default: false, validate: isBoolean },
   /** SAF directory URI picked during onboarding. */
   backupDirectoryUri: { default: null as string | null, validate: isNullableString },
 } as const;

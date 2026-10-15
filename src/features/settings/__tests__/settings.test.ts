@@ -32,6 +32,7 @@ describe('settings repository', () => {
       promptWindowEndHour: 22,
       promptsPerDay: 3,
       recallReminderEnabled: true,
+      onboardingCompleted: false,
       backupDirectoryUri: null,
     });
   });
