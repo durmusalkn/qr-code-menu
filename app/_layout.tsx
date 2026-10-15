@@ -25,7 +25,12 @@ export default function RootLayout() {
 
   return (
     <>
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen
+          name="permissions"
+          options={{ headerShown: true, title: tr.permissions.title }}
+        />
+      </Stack>
       <StatusBar style="dark" />
     </>
   );
