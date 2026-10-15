@@ -72,6 +72,32 @@ Expo Go.
   adapter (`src/db/testing/nodeSqliteConnection.ts`) that mimics the expo-sqlite API drizzle's expo
   driver uses. Same driver, dialect, migrator and SQL as on the device; no extra dependency. Needs
   Node ≥ 22.16 (`setReturnArrays`, `columns`).
+- **`expo-battery`** (owner-approved addition) reads the battery-optimisation exemption for the
+  permission status screen.
+- **Native modules for later phases are already installed** (owner-approved, to save EAS builds):
+  `expo-task-manager`, `expo-background-task`, `expo-media-library`, `expo-video`,
+  `expo-video-thumbnails`, `react-native-zip-archive`, plus `expo-audio`, `expo-image-picker`,
+  `expo-file-system`. Their plugins are configured in `app.config.ts`. Using them needs no new
+  build unless their plugin options change.
+- `expo-asset` is a direct dependency pinned to SDK 57: `expo-audio` peers on `expo-asset@*` and
+  npm otherwise installs the next SDK's version, which breaks Metro bundling.
+
+### Android permissions (as configured)
+
+- Requested at runtime: notifications, precise location, background location, camera,
+  microphone. Approximate location counts as not granted (place names and visits need precise).
+- Gallery: `expo-media-library` writes on Android 13+ **without any permission**; its plugin is
+  set to `granularPermissions: []` and every `READ_MEDIA_*` / `READ_EXTERNAL_STORAGE` /
+  `ACCESS_MEDIA_LOCATION` is in `blockedPermissions`. Looking up albums needs read permission,
+  so album handling must work from what the app itself created (Phase 3).
+- **No `SCHEDULE_EXACT_ALARM`**: expo-notifications falls back to inexact
+  `setAndAllowWhileIdle`, fine for prompts at random times; the permission is store-restricted.
+- **No `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`** (store-restricted): onboarding opens the
+  battery-optimisation list screen instead.
+- `SYSTEM_ALERT_WINDOW` (template default) is blocked.
+- `expo-audio` / `expo-video` background playback and background recording are off.
+- Check the generated manifest by running `npx expo prebuild --platform android --no-install` in
+  a scratch copy of the repo (never commit `android/`).
 
 ## Development environment
 
@@ -149,7 +175,7 @@ Step by step, each with a short "why":
 3. Camera and microphone
 4. Battery optimisation exemption (Samsung kills background work aggressively — open the setting
    via `expo-intent-launcher`)
-5. Exact alarm (`SCHEDULE_EXACT_ALARM`) if needed
+5. ~~Exact alarm (`SCHEDULE_EXACT_ALARM`) if needed~~ — not needed, see "Android permissions"
 6. Backup folder selection (SAF, once)
 
 A **permission status screen** (also reachable from settings): missing permissions shown in red,
@@ -249,7 +275,7 @@ src/
   db/                   # Drizzle schema, client, migrations, test database
   features/
     moments/            # moments + media repository (shared by capture, timeline, recall)
-    onboarding/
+    onboarding/         # onboarding flow + permission model/service/status screen
     capture/
     mood/
     timeline/
@@ -266,6 +292,10 @@ src/
 - UI strings are **Turkish** and live in `src/i18n/tr.ts`; code, identifiers, comments and commit
   messages are **English**.
 - Import alias: `@/…` → `src/…`.
+- `app/` route files stay thin and re-export screens from `src/features/*`.
+- Permission reads/requests go through `src/features/onboarding/permissionService.ts` (native) and
+  the pure model in `permissions.ts`; UI uses the Zustand `usePermissionStatuses()` hook, which
+  re-reads statuses whenever the app returns to the foreground.
 - DB access only through layers like `features/*/repository.ts`; no SQL in components.
   Repositories are factories (`createXRepository(db, deps)`) so tests can inject a test database,
   ids and a clock. Production code passes `db` from `@/db/client`.
@@ -284,7 +314,7 @@ EAS build is needed; wait for approval.
 - [x] **Phase 0 – Setup:** Expo project, TS strict, Expo Router, NativeWind, Zustand,
       ESLint/Prettier, Jest, `app.config.ts`, `eas.json`, `expo-updates`, `CLAUDE.md`, `README.md`.
 - [x] **Phase 1 – Data layer:** Drizzle schema, migrations, WAL, repositories, mood mapping, tests.
-- [ ] **Phase 2 – Onboarding & permissions:** permission flow, status screen, backup folder.
+- [x] **Phase 2 – Onboarding & permissions:** permission flow, status screen, backup folder.
 - [ ] **Phase 3 – Capture:** note, mood picker, audio, Samsung Camera photo/video, gallery copy,
       location + address + weather.
 - [ ] **Phase 4 – Timeline:** day list, day detail, media playback.
