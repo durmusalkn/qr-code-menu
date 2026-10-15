@@ -9,9 +9,40 @@ export const tr = {
   home: {
     title: 'Anılar',
     subtitle: 'Günlük tutmadan günlük tut.',
-    setupNotice: 'Kurulum tamam. Özellikler sonraki fazlarda gelecek.',
     permissionsLink: 'İzin durumu',
     missingPermissions: (count: number) => `${count} izin eksik`,
+  },
+  capture: {
+    actions: {
+      note: 'Not',
+      mood: 'Ruh hali',
+      photo: 'Fotoğraf',
+      video: 'Video',
+      audio: 'Ses',
+    },
+    saved: 'Kaydedildi',
+    saveFailed: 'Kaydedilemedi. Tekrar dener misin?',
+    cameraPermission: 'Kamera izni yok. İzin durumu ekranından verebilirsin.',
+    cameraFailed: 'Kamera açılamadı.',
+    done: 'Bitti',
+    star: 'Önemli',
+    note: {
+      title: 'Not',
+      placeholder: 'Şu an ne yapıyorsun?',
+    },
+    mood: {
+      title: 'Ruh hali',
+      question: 'Şu an nasıl hissediyorsun?',
+    },
+    audio: {
+      start: '🎙️  Ses kaydı başlat',
+      stop: (elapsed: string) => `■  Durdur  ${elapsed}`,
+      saved: (duration: string) => `🎙️ Ses kaydı (${duration}) kaydedildi`,
+      errors: {
+        permission: 'Mikrofon izni yok. İzin durumu ekranından verebilirsin.',
+        failed: 'Ses kaydı başlatılamadı.',
+      },
+    },
   },
   database: {
     errorTitle: 'Veritabanı açılamadı',

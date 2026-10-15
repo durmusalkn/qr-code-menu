@@ -30,6 +30,14 @@ export default function RootLayout() {
           name="permissions"
           options={{ headerShown: true, title: tr.permissions.title }}
         />
+        <Stack.Screen
+          name="capture/note"
+          options={{ headerShown: true, title: tr.capture.note.title }}
+        />
+        <Stack.Screen
+          name="capture/mood"
+          options={{ headerShown: true, title: tr.capture.mood.title }}
+        />
       </Stack>
       <StatusBar style="dark" />
     </>
