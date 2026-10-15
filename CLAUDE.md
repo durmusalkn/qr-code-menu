@@ -64,6 +64,14 @@ Expo Go.
   Newer lightningcss versions have the binary but break NativeWind colours (channels multiplied by
   255). The WASM build of the same 1.27.0 engine was verified to produce byte-identical output.
   Remove the override when NativeWind moves to a lightningcss version with an Android binary.
+- **Drizzle 0.45 (stable), not the 1.0 RC** that drizzle's docs now show. Migrations are generated
+  without `driver: 'expo'` and bundled into `src/db/migrations.generated.ts` by
+  `scripts/bundle-migrations.js`, so no `babel-plugin-inline-import` / `.sql` Metro extension is
+  needed. `npm run check` fails if the bundle is stale.
+- **Repository tests run against real SQLite** via Node's built-in `node:sqlite`, wrapped in a tiny
+  adapter (`src/db/testing/nodeSqliteConnection.ts`) that mimics the expo-sqlite API drizzle's expo
+  driver uses. Same driver, dialect, migrator and SQL as on the device; no extra dependency. Needs
+  Node ≥ 22.16 (`setReturnArrays`, `columns`).
 
 ## Development environment
 
@@ -77,8 +85,8 @@ Expo Go.
     `--no-bytecode` and uploaded with `eas update --skip-bundler` (`npm run update:preview`).
 - No GitHub Actions.
 - Claude cannot run Android builds. **Validate every change with `npm run check`**
-  (`tsc --noEmit`, ESLint, Jest). `npx expo export --platform android --no-bytecode` is a useful
-  extra check that the Metro bundle (Router + NativeWind) compiles.
+  (`tsc --noEmit`, ESLint, Jest, migration bundle up to date). `npx expo export --platform android
+--no-bytecode` is a useful extra check that the Metro bundle (Router + NativeWind) compiles.
 - When a change touches native config (permissions, plugins, `app.config.ts`, native
   dependencies), **say explicitly that it needs a new EAS build**, and bump `version`.
 
@@ -115,6 +123,19 @@ Tables (proposal; reasoned changes are welcome):
 - `settings`: `key`, `value` (JSON)
 - `backup_log`: `id`, `started_at`, `finished_at`, `status`, `files_copied`, `bytes_copied`,
   `error`
+
+As implemented (`src/db/schema.ts`), with these reasoned additions:
+
+- `prompts.notification_id`: the OS notification id, needed to cancel prompts when re-planning.
+- `visits.departed_at` is null while a visit is ongoing.
+- `media.moment_id` → `moments.id` `ON DELETE CASCADE`; `media.rel_path` is unique.
+- `moments.prompt_id` and `prompts.response_moment_id` have **no** FK constraint: the two tables
+  point at each other and import must be able to insert either first.
+- CHECK constraints guard `mood` (1–10) and the enum columns, so imported data cannot bypass them.
+- `backup_log.status`: `running` | `success` | `error`.
+- Schema changes: edit `schema.ts`, then `npm run db:generate` (drizzle-kit + bundling). Note that
+  drizzle's migrator wraps all migrations in one transaction, so `PRAGMA foreign_keys` inside a
+  migration has no effect.
 
 ## Features
 
@@ -225,8 +246,9 @@ Stored as 1–10, shown as emoji. Default mapping (single constants file):
 ```
 app/                    # Expo Router screens (routes only)
 src/
-  db/                   # Drizzle schema, client, migrations
+  db/                   # Drizzle schema, client, migrations, test database
   features/
+    moments/            # moments + media repository (shared by capture, timeline, recall)
     onboarding/
     capture/
     mood/
@@ -245,6 +267,10 @@ src/
   messages are **English**.
 - Import alias: `@/…` → `src/…`.
 - DB access only through layers like `features/*/repository.ts`; no SQL in components.
+  Repositories are factories (`createXRepository(db, deps)`) so tests can inject a test database,
+  ids and a clock. Production code passes `db` from `@/db/client`.
+- Migrations run once per JS runtime via `migrateDatabase()` (`useDatabase()` in the root layout).
+  Background tasks that may start without the UI must `await migrateDatabase()` first.
 - Pure logic (notification scheduling, visit detection, "on this day" queries, manifest
   validation, mood mapping) is kept free of native dependencies and **tested with Jest**.
 - Conventional Commits; each phase in small, separate commits.
@@ -257,7 +283,7 @@ EAS build is needed; wait for approval.
 
 - [x] **Phase 0 – Setup:** Expo project, TS strict, Expo Router, NativeWind, Zustand,
       ESLint/Prettier, Jest, `app.config.ts`, `eas.json`, `expo-updates`, `CLAUDE.md`, `README.md`.
-- [ ] **Phase 1 – Data layer:** Drizzle schema, migrations, WAL, repositories, mood mapping, tests.
+- [x] **Phase 1 – Data layer:** Drizzle schema, migrations, WAL, repositories, mood mapping, tests.
 - [ ] **Phase 2 – Onboarding & permissions:** permission flow, status screen, backup folder.
 - [ ] **Phase 3 – Capture:** note, mood picker, audio, Samsung Camera photo/video, gallery copy,
       location + address + weather.

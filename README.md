@@ -20,11 +20,12 @@ NativeWind 4 · Zustand · Jest (`jest-expo`) · ESLint + Prettier · EAS Build 
 | ------------------------ | -------------------------------------------------------------------------- |
 | `npm start`              | Metro'yu development build için başlatır                                   |
 | `npm run start:local`    | Metro'yu sadece `localhost` üzerinden başlatır (Termux + aynı telefon)     |
-| `npm run check`          | `tsc --noEmit` + ESLint + Jest — her değişiklikten sonra                   |
+| `npm run check`          | `tsc --noEmit` + ESLint + Jest + migration paketi kontrolü                 |
 | `npm run typecheck`      | Sadece TypeScript kontrolü                                                 |
 | `npm run lint`           | ESLint (Prettier kuralları dahil)                                          |
 | `npm test`               | Jest testleri                                                              |
 | `npm run format`         | Prettier ile tüm dosyaları biçimlendirir                                   |
+| `npm run db:generate`    | Şema değişikliğinden sonra migration üretir ve uygulamaya paketler         |
 | `npm run build:dev`      | EAS'ta development client APK'sı (`Anılar (Dev)`)                          |
 | `npm run build:preview`  | EAS'ta kurulabilir APK (`Anılar`)                                          |
 | `npm run update:preview` | JS değişikliklerini build almadan `preview` kanalına gönderir (EAS Update) |
@@ -111,6 +112,8 @@ npm run update:preview    # sonraki JS değişikliklerini OTA gönder
   `overrides`, aynı sürümün WebAssembly derlemesini (`lightningcss-wasm@1.27.0`) kullandırır;
   çıktının native sürümle birebir aynı olduğu doğrulandı.
 - Watchman gerekmez; Metro Node'un dosya izleyicisini kullanır.
+- Testler Node'un yerleşik `node:sqlite` modülünü kullanır: Termux'taki `nodejs-lts` en az
+  **22.16** olmalı (`node -v`).
 
 ## Klasör yapısı
 
