@@ -99,6 +99,30 @@ Expo Go.
 - Check the generated manifest by running `npx expo prebuild --platform android --no-install` in
   a scratch copy of the repo (never commit `android/`).
 
+### Capture (as implemented)
+
+- **Save first, enrich later.** A capture is written immediately (no confirmation); location,
+  place name (`reverseGeocodeAsync`, shortened like "Caferağa, Kadıköy") and weather (Open-Meteo)
+  are added in the background by `enrichMomentContext`. Each part has a timeout and is simply
+  left empty when it fails (offline, no permission, no fix). A later backfill (e.g. Open-Meteo's
+  historical API) is possible but not built.
+- Photo/video: `launchCameraAsync` with `quality: 1` (original file, no re-encode) → file moved to
+  `media/YYYY/MM/DD/<mediaId>.<ext>` → moment + media inserted in one transaction (files are
+  rolled back if that fails) → gallery copy in the background. Video thumbnails via
+  `expo-video-thumbnails`. Results delivered after Android killed the app while the camera was open
+  are recovered via `getPendingResultAsync()` on the home screen.
+- Gallery: SDK 57's `expo-media-library` default export is the new object API (`Asset.create`,
+  `Album.create`); the old functions (`createAssetAsync`, …) throw at runtime. The album
+  "Anılarım" (Pictures/Anılarım) is created by the first copy and its id kept in settings
+  (`galleryAlbumId`); later copies go into it with `Asset.create(file, album)`. The first copy's
+  asset id is not reported, so its `gallery_asset_id` stays null.
+- Audio: in-app `expo-audio` recording, AAC/.m4a, 48 kHz, 128 kbps. Recordings stop and are saved
+  when leaving the screen or when the app goes to the background (no background mic).
+- Note screen = text + any number of recordings + ⭐ for one moment; the moment is created lazily
+  (nothing is saved for an empty draft). Mood picker saves on a single tap.
+- Capture routes take `source` / `promptId` params (`parseCaptureOrigin`), so prompt
+  notifications (Phase 6) can open them; a prompt is marked responded when its moment is created.
+
 ## Development environment
 
 - The owner has **no computer**; everything happens on the phone.
@@ -315,7 +339,7 @@ EAS build is needed; wait for approval.
       ESLint/Prettier, Jest, `app.config.ts`, `eas.json`, `expo-updates`, `CLAUDE.md`, `README.md`.
 - [x] **Phase 1 – Data layer:** Drizzle schema, migrations, WAL, repositories, mood mapping, tests.
 - [x] **Phase 2 – Onboarding & permissions:** permission flow, status screen, backup folder.
-- [ ] **Phase 3 – Capture:** note, mood picker, audio, Samsung Camera photo/video, gallery copy,
+- [x] **Phase 3 – Capture:** note, mood picker, audio, Samsung Camera photo/video, gallery copy,
       location + address + weather.
 - [ ] **Phase 4 – Timeline:** day list, day detail, media playback.
 - [ ] **Phase 5 – Background location:** foreground service, points, visit detection.
