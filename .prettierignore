@@ -4,3 +4,5 @@ dist
 android
 ios
 package-lock.json
+src/db/migrations.generated.ts
+drizzle

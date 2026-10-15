@@ -11,4 +11,7 @@ export const tr = {
     subtitle: 'Günlük tutmadan günlük tut.',
     setupNotice: 'Kurulum tamam. Özellikler sonraki fazlarda gelecek.',
   },
+  database: {
+    errorTitle: 'Veritabanı açılamadı',
+  },
 } as const;
