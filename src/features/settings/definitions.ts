@@ -23,6 +23,8 @@ export const SETTING_DEFINITIONS = {
   promptsPerDay: { default: 3, validate: isIntegerBetween(0, 10) },
   recallReminderEnabled: { default: true, validate: isBoolean },
   onboardingCompleted: { default: false, validate: isBoolean },
+  /** MediaStore bucket id of the "Anılarım" gallery album, once the app has created it. */
+  galleryAlbumId: { default: null as string | null, validate: isNullableString },
   /** SAF directory URI picked during onboarding. */
   backupDirectoryUri: { default: null as string | null, validate: isNullableString },
 } as const;

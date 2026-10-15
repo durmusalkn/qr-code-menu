@@ -33,6 +33,7 @@ describe('settings repository', () => {
       promptsPerDay: 3,
       recallReminderEnabled: true,
       onboardingCompleted: false,
+      galleryAlbumId: null,
       backupDirectoryUri: null,
     });
   });

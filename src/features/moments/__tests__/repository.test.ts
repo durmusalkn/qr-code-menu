@@ -140,6 +140,35 @@ describe('moments repository', () => {
     ).toEqual([other.id]);
   });
 
+  it('creates a moment with its media atomically', () => {
+    const { moment, media: rows } = repo.createWithMedia({ source: 'in_app' }, [
+      { ...PHOTO, id: 'file-uuid' },
+    ]);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ id: 'file-uuid', momentId: moment.id });
+    expect(repo.getWithMedia(moment.id)?.media).toHaveLength(1);
+  });
+
+  it('leaves nothing behind when a media row is invalid', () => {
+    repo.create({ source: 'in_app' });
+    const existing = repo.addMedia('id-1', PHOTO);
+
+    // Same rel_path violates the unique index.
+    expect(() => repo.createWithMedia({ source: 'in_app' }, [{ ...PHOTO }])).toThrow(/UNIQUE/);
+
+    expect(repo.listBetween(0, Number.MAX_SAFE_INTEGER)).toHaveLength(1);
+    expect(t.db.select().from(media).all()).toEqual([existing]);
+  });
+
+  it('records the gallery copy of a media file', () => {
+    const { media: rows } = repo.createWithMedia({ source: 'in_app' }, [PHOTO]);
+
+    repo.setGalleryAssetId(rows[0]!.id, '1234');
+
+    expect(repo.listMedia(rows[0]!.momentId)[0]?.galleryAssetId).toBe('1234');
+  });
+
   it('returns no media when deleting an unknown moment', () => {
     expect(repo.delete('missing')).toEqual([]);
   });

@@ -35,6 +35,8 @@ export interface CreateMomentInput extends MomentContext {
 export type MomentPatch = Partial<Pick<Moment, 'note' | 'mood' | 'starred'>> & MomentContext;
 
 export interface AddMediaInput {
+  /** Defaults to a new id. Callers that name the file after the media id pass it here. */
+  id?: string;
   kind: MediaKind;
   relPath: string;
   mimeType: string;
@@ -63,9 +65,57 @@ function assertRelPath(relPath: string | null | undefined): void {
   }
 }
 
+function mediaValues(
+  momentId: string,
+  input: AddMediaInput,
+  deps: RepositoryDeps,
+): typeof media.$inferInsert {
+  assertRelPath(input.relPath);
+  assertRelPath(input.thumbnailRelPath);
+  return {
+    id: input.id ?? deps.newId(),
+    momentId,
+    kind: input.kind,
+    relPath: input.relPath,
+    mimeType: input.mimeType,
+    sizeBytes: input.sizeBytes,
+    durationMs: input.durationMs ?? null,
+    width: input.width ?? null,
+    height: input.height ?? null,
+    thumbnailRelPath: input.thumbnailRelPath ?? null,
+    galleryAssetId: input.galleryAssetId ?? null,
+    createdAt: deps.now(),
+  };
+}
+
 export function createMomentsRepository(db: AppDatabase, deps: RepositoryDeps = defaultDeps) {
   function getById(id: string): Moment | undefined {
     return db.select().from(moments).where(eq(moments.id, id)).get();
+  }
+
+  function insertMoment(target: Pick<AppDatabase, 'insert'>, input: CreateMomentInput): Moment {
+    assertMood(input.mood);
+    const createdAt = input.createdAt ?? deps.now();
+    return target
+      .insert(moments)
+      .values({
+        id: deps.newId(),
+        createdAt,
+        updatedAt: createdAt,
+        source: input.source,
+        note: input.note ?? null,
+        mood: input.mood ?? null,
+        starred: input.starred ?? false,
+        promptId: input.promptId ?? null,
+        lat: input.lat ?? null,
+        lng: input.lng ?? null,
+        accuracy: input.accuracy ?? null,
+        placeName: input.placeName ?? null,
+        weatherCode: input.weatherCode ?? null,
+        temperatureC: input.temperatureC ?? null,
+      })
+      .returning()
+      .get();
   }
 
   function listMedia(momentId: string): Media[] {
@@ -79,28 +129,25 @@ export function createMomentsRepository(db: AppDatabase, deps: RepositoryDeps = 
 
   return {
     create(input: CreateMomentInput): Moment {
-      assertMood(input.mood);
-      const createdAt = input.createdAt ?? deps.now();
-      return db
-        .insert(moments)
-        .values({
-          id: deps.newId(),
-          createdAt,
-          updatedAt: createdAt,
-          source: input.source,
-          note: input.note ?? null,
-          mood: input.mood ?? null,
-          starred: input.starred ?? false,
-          promptId: input.promptId ?? null,
-          lat: input.lat ?? null,
-          lng: input.lng ?? null,
-          accuracy: input.accuracy ?? null,
-          placeName: input.placeName ?? null,
-          weatherCode: input.weatherCode ?? null,
-          temperatureC: input.temperatureC ?? null,
-        })
-        .returning()
-        .get();
+      return insertMoment(db, input);
+    },
+
+    /** Creates a moment together with its media in one transaction: both or neither. */
+    createWithMedia(
+      input: CreateMomentInput,
+      mediaInputs: readonly AddMediaInput[],
+    ): MomentWithMedia {
+      return db.transaction((tx) => {
+        const moment = insertMoment(tx, input);
+        const rows = mediaInputs.map((m) =>
+          tx
+            .insert(media)
+            .values(mediaValues(moment.id, m, deps))
+            .returning()
+            .get(),
+        );
+        return { moment, media: rows };
+      });
     },
 
     getById,
@@ -143,26 +190,15 @@ export function createMomentsRepository(db: AppDatabase, deps: RepositoryDeps = 
     },
 
     addMedia(momentId: string, input: AddMediaInput): Media {
-      assertRelPath(input.relPath);
-      assertRelPath(input.thumbnailRelPath);
       return db
         .insert(media)
-        .values({
-          id: deps.newId(),
-          momentId,
-          kind: input.kind,
-          relPath: input.relPath,
-          mimeType: input.mimeType,
-          sizeBytes: input.sizeBytes,
-          durationMs: input.durationMs ?? null,
-          width: input.width ?? null,
-          height: input.height ?? null,
-          thumbnailRelPath: input.thumbnailRelPath ?? null,
-          galleryAssetId: input.galleryAssetId ?? null,
-          createdAt: deps.now(),
-        })
+        .values(mediaValues(momentId, input, deps))
         .returning()
         .get();
+    },
+
+    setGalleryAssetId(mediaId: string, galleryAssetId: string): void {
+      db.update(media).set({ galleryAssetId }).where(eq(media.id, mediaId)).run();
     },
 
     listMedia,
