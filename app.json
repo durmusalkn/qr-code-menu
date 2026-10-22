@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "Gelişim Günlüğü",
+    "slug": "gelisim-gunlugu",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0F1115",
+    "ios": {
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "com.durmusalkn.gelisimgunlugu",
+      "adaptiveIcon": {
+        "backgroundColor": "#0F1115",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-sqlite",
+      "expo-sharing",
+      "expo-video",
+      "expo-image",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Gelişim fotoğrafını çekebilmek için kamera erişimi gerekiyor.",
+          "photosPermission": "Geçmiş fotoğraflarını ekleyebilmek için galeri erişimi gerekiyor.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "savePhotosPermission": "Gelişim videosunu galerine kaydetmek için izin gerekiyor.",
+          "granularPermissions": ["video"]
+        }
+      ]
+    ]
+  }
+}
